@@ -379,6 +379,7 @@ private fun TurnIndicatorBadge(
     }
 
     val isUrgent = turnDurationSeconds > 0 && secondsLeft <= 10
+    val isCurrentPlayerBot = currentTurnPlayer.contains("(Bot)")
 
     Box(
         modifier = Modifier

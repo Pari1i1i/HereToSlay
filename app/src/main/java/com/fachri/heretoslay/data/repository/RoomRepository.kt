@@ -202,6 +202,74 @@ class RoomRepository(
         }
     }
 
+    suspend fun addBotPlayer(roomCode: String): Result<Unit> {
+        return try {
+            val cleanCode = roomCode.trim().uppercase()
+            val docRef = roomsCollection.document(cleanCode)
+
+            firestore.runTransaction { tx ->
+                val snapshot = tx.get(docRef)
+                if (!snapshot.exists()) throw IllegalStateException("Room tidak ditemukan.")
+
+                val status = snapshot.getString(FirestoreSchema.Fields.STATUS)
+                if (status != RoomStatus.WAITING.name) {
+                    throw IllegalStateException("Permainan sudah dimulai.")
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                val playersRaw = (snapshot.get(FirestoreSchema.Fields.PLAYERS) as? List<Map<String, Any?>>)
+                    ?: emptyList()
+
+                if (playersRaw.size >= 6) {
+                    throw IllegalStateException("Room sudah penuh (maksimal 6 pemain).")
+                }
+
+                val botIndex = playersRaw.count { (it[FirestoreSchema.PlayerFields.UID] as? String)?.startsWith("bot_") == true } + 1
+                val botNames = listOf("Sir Knight (Bot)", "Shadow Mage (Bot)", "Swift Archer (Bot)", "Wild Druid (Bot)", "Holy Priest (Bot)")
+                val botName = botNames.getOrElse(botIndex - 1) { "Dummy Bot $botIndex" }
+
+                val botPlayer = Player(
+                    uid = "bot_${System.currentTimeMillis()}_$botIndex",
+                    name = botName,
+                    isHost = false,
+                    isReady = true, // Bots are ready immediately
+                )
+
+                val updatedPlayers = playersRaw + FirestoreSchema.playerToMap(botPlayer)
+                tx.update(docRef, FirestoreSchema.Fields.PLAYERS, updatedPlayers)
+                tx.update(docRef, FirestoreSchema.Fields.UPDATED_AT, System.currentTimeMillis())
+            }.await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun removeBotPlayer(roomCode: String, botUid: String): Result<Unit> {
+        return try {
+            val cleanCode = roomCode.trim().uppercase()
+            val docRef = roomsCollection.document(cleanCode)
+
+            firestore.runTransaction { tx ->
+                val snapshot = tx.get(docRef)
+                if (!snapshot.exists()) throw IllegalStateException("Room tidak ditemukan.")
+
+                @Suppress("UNCHECKED_CAST")
+                val playersRaw = (snapshot.get(FirestoreSchema.Fields.PLAYERS) as? List<Map<String, Any?>>)
+                    ?: emptyList()
+
+                val updatedPlayers = playersRaw.filter { it[FirestoreSchema.PlayerFields.UID] != botUid }
+                tx.update(docRef, FirestoreSchema.Fields.PLAYERS, updatedPlayers)
+                tx.update(docRef, FirestoreSchema.Fields.UPDATED_AT, System.currentTimeMillis())
+            }.await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun startGame(roomCode: String): Result<Unit> {
         return try {
             val docRef = roomsCollection.document(roomCode.trim().uppercase())

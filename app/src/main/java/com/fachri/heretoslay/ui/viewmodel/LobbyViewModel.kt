@@ -103,6 +103,26 @@ class LobbyViewModel(
         }
     }
 
+    fun addBot() {
+        if (!_uiState.value.isHost) return
+        viewModelScope.launch {
+            val result = roomRepository.addBotPlayer(roomCode)
+            if (result.isFailure) {
+                _uiState.update { it.copy(errorMessage = result.exceptionOrNull()?.message) }
+            }
+        }
+    }
+
+    fun removeBot(botUid: String) {
+        if (!_uiState.value.isHost) return
+        viewModelScope.launch {
+            val result = roomRepository.removeBotPlayer(roomCode, botUid)
+            if (result.isFailure) {
+                _uiState.update { it.copy(errorMessage = result.exceptionOrNull()?.message) }
+            }
+        }
+    }
+
     fun startGame(onSuccess: () -> Unit) {
         if (!_uiState.value.canStartGame) return
         _uiState.update { it.copy(isStartingGame = true, errorMessage = null) }

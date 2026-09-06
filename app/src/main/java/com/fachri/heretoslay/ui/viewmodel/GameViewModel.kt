@@ -77,8 +77,27 @@ class GameViewModel(
                             errorMessage = if (state == null) "Room tidak ditemukan atau telah ditutup." else null
                         )
                     }
+                    // If it's a Bot's turn and local user is Host, auto-play bot turn after small delay
+                    checkAndRunBotTurn(state)
                 }
                 .launchIn(viewModelScope)
+        }
+    }
+
+    private fun checkAndRunBotTurn(state: RoomState?) {
+        if (state == null || state.status != RoomStatus.PLAYING) return
+        val current = state.currentPlayer ?: return
+        val isHost = state.hostId == _uiState.value.localUid
+        if (current.uid.startsWith("bot_") && isHost) {
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(1200) // Realistic turn delay
+                // Bot does draw card or attack or end turn
+                if (current.actionPointsRemaining >= 1) {
+                    gameRepository.drawCard(roomCode, current.uid)
+                    kotlinx.coroutines.delay(800)
+                }
+                gameRepository.endTurn(roomCode, current.uid)
+            }
         }
     }
 

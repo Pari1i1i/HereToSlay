@@ -162,13 +162,38 @@ fun LobbyScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = "PEMAIN DI ROOM (${room.players.size}/6)",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = HtsParchmentDim,
-                                letterSpacing = 2.sp,
-                            ),
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "PEMAIN DI ROOM (${room.players.size}/6)",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = HtsParchmentDim,
+                                    letterSpacing = 2.sp,
+                                ),
+                            )
+                            if (uiState.isHost && room.players.size < 6) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(HtsGold.copy(alpha = 0.2f))
+                                        .border(1.dp, HtsGold.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                        .clickable { viewModel.addBot() }
+                                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "+ Tambah Bot",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = HtsGold,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 9.sp,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = "Minimal 2 pemain",
                             style = MaterialTheme.typography.bodySmall.copy(color = HtsSilverDim),
