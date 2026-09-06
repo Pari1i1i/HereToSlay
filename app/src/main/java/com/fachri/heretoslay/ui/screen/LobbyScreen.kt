@@ -294,6 +294,17 @@ fun LobbyScreen(
                             },
                         )
 
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Turn Timer Selection
+                        TurnTimerSelector(
+                            currentSeconds = room.turnDurationSeconds,
+                            isHost = uiState.isHost,
+                            onSelectDuration = { seconds ->
+                                viewModel.setTurnDuration(seconds)
+                            }
+                        )
+
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
@@ -405,6 +416,83 @@ fun LobbyScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun TurnTimerSelector(
+    currentSeconds: Int,
+    isHost: Boolean,
+    onSelectDuration: (Int) -> Unit,
+) {
+    val options = listOf(30, 60, 90, 120, 0) // 0 = unlimited
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(HtsCardSurface)
+            .border(1.dp, HtsBorderSubtle, RoundedCornerShape(8.dp))
+            .padding(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "WAKTU PER TURN",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = HtsGold,
+                    letterSpacing = 1.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                ),
+            )
+            Text(
+                text = if (currentSeconds == 0) "Tanpa Batas" else "${currentSeconds}s",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = HtsParchment,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                ),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            options.forEach { sec ->
+                val isSelected = currentSeconds == sec
+                val label = if (sec == 0) "∞" else "${sec}s"
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(28.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) HtsGold else HtsSurfaceNavy)
+                        .border(
+                            1.dp,
+                            if (isSelected) HtsParchment else HtsBorderSubtle,
+                            RoundedCornerShape(6.dp)
+                        )
+                        .clickable(enabled = isHost) { onSelectDuration(sec) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = if (isSelected) HtsDeepNavy else HtsSilver,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                            fontSize = 10.sp,
+                        ),
+                    )
+                }
+            }
+        }
     }
 }
 

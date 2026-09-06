@@ -93,6 +93,16 @@ class LobbyViewModel(
         }
     }
 
+    fun setTurnDuration(seconds: Int) {
+        if (!_uiState.value.isHost) return
+        viewModelScope.launch {
+            val result = roomRepository.updateTurnDuration(roomCode, seconds)
+            if (result.isFailure) {
+                _uiState.update { it.copy(errorMessage = result.exceptionOrNull()?.message) }
+            }
+        }
+    }
+
     fun startGame(onSuccess: () -> Unit) {
         if (!_uiState.value.canStartGame) return
         _uiState.update { it.copy(isStartingGame = true, errorMessage = null) }

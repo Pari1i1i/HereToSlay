@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -124,8 +125,14 @@ fun GameScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                // Turn Indicator Pill
-                TurnIndicatorBadge(isMyTurn = isMyTurn, currentTurnPlayer = room.currentPlayer?.name ?: "")
+                // Turn Indicator Pill with Timer
+                TurnIndicatorBadge(
+                    isMyTurn = isMyTurn,
+                    currentTurnPlayer = room.currentPlayer?.name ?: "",
+                    turnDurationSeconds = room.turnDurationSeconds,
+                    turnStartTimeMillis = room.turnStartTimeMillis,
+                    onTimeOut = { viewModel.endTurn() },
+                )
 
                 Spacer(modifier = Modifier.width(10.dp))
 
@@ -325,7 +332,13 @@ fun GameScreen(
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 @Composable
-private fun TurnIndicatorBadge(isMyTurn: Boolean, currentTurnPlayer: String) {
+private fun TurnIndicatorBadge(
+    isMyTurn: Boolean,
+    currentTurnPlayer: String,
+    turnDurationSeconds: Int = 0,
+    turnStartTimeMillis: Long = 0L,
+    onTimeOut: () -> Unit = {},
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "turnPulse")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.6f,
@@ -337,30 +350,78 @@ private fun TurnIndicatorBadge(isMyTurn: Boolean, currentTurnPlayer: String) {
         label = "pulseAlpha"
     )
 
+    var secondsLeft by androidx.compose.runtime.remember(turnStartTimeMillis, turnDurationSeconds) {
+        androidx.compose.runtime.mutableIntStateOf(
+            if (turnDurationSeconds > 0 && turnStartTimeMillis > 0) {
+                val elapsed = ((System.currentTimeMillis() - turnStartTimeMillis) / 1000).toInt()
+                (turnDurationSeconds - elapsed).coerceAtLeast(0)
+            } else {
+                turnDurationSeconds
+            }
+        )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(turnStartTimeMillis, turnDurationSeconds, isMyTurn) {
+        if (turnDurationSeconds > 0 && turnStartTimeMillis > 0) {
+            while (true) {
+                val elapsed = ((System.currentTimeMillis() - turnStartTimeMillis) / 1000).toInt()
+                val rem = (turnDurationSeconds - elapsed).coerceAtLeast(0)
+                secondsLeft = rem
+                if (rem <= 0) {
+                    if (isMyTurn) {
+                        onTimeOut()
+                    }
+                    break
+                }
+                kotlinx.coroutines.delay(1000)
+            }
+        }
+    }
+
+    val isUrgent = turnDurationSeconds > 0 && secondsLeft <= 10
+
     Box(
         modifier = Modifier
-            .width(130.dp)
+            .width(140.dp)
             .height(44.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(if (isMyTurn) HtsGold.copy(alpha = 0.2f) else HtsSurfaceNavy)
+            .background(if (isUrgent) HtsCrimson.copy(alpha = 0.3f) else if (isMyTurn) HtsGold.copy(alpha = 0.2f) else HtsSurfaceNavy)
             .border(
                 1.5.dp,
-                if (isMyTurn) HtsGold.copy(alpha = pulseAlpha) else HtsBorderSubtle,
+                if (isUrgent) HtsCrimsonBright.copy(alpha = pulseAlpha)
+                else if (isMyTurn) HtsGold.copy(alpha = pulseAlpha)
+                else HtsBorderSubtle,
                 RoundedCornerShape(22.dp)
             )
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = if (isMyTurn) "GILIRANMU!" else "GILIRAN",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isMyTurn) HtsGold else HtsSilverDim,
-                    letterSpacing = 1.sp,
-                ),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = if (isMyTurn) "GILIRANMU!" else "GILIRAN",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isUrgent) HtsCrimsonBright else if (isMyTurn) HtsGold else HtsSilverDim,
+                        letterSpacing = 1.sp,
+                    ),
+                )
+                if (turnDurationSeconds > 0) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "(${secondsLeft}s)",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isUrgent) HtsCrimsonBright else HtsParchment,
+                        ),
+                    )
+                }
+            }
             Text(
                 text = if (isMyTurn) "Ambil Aksimu" else currentTurnPlayer,
                 style = MaterialTheme.typography.titleSmall.copy(
