@@ -2,8 +2,11 @@ package com.example.heretoslay.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutBack
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -42,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.heretoslay.ui.theme.HtsBorder
@@ -93,8 +99,8 @@ fun HomeScreen(
             .background(
                 Brush.linearGradient(
                     colors = listOf(HtsDeepNavy, HtsSurfaceNavy),
-                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                    end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+                    start = Offset(0f, 0f),
+                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
                 )
             ),
     ) {
@@ -121,11 +127,8 @@ fun HomeScreen(
                             translationY = (1f - panelReveal.value) * 30f
                         }
                 ) {
-                    // Decorative sigil — simplified version of splash sigil
                     HtsSmallSigil()
-
                     Spacer(Modifier.height(20.dp))
-
                     Text(
                         text = "HERE TO SLAY",
                         style = MaterialTheme.typography.headlineLarge.copy(
@@ -161,7 +164,7 @@ fun HomeScreen(
                 }
             }
 
-            // Divider line
+            // Vertical divider
             Box(
                 modifier = Modifier
                     .width(1.dp)
@@ -303,18 +306,23 @@ fun HomeScreen(
                         Spacer(Modifier.height(8.dp))
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.widthIn(max = 420.dp).fillMaxWidth(),
+                            modifier = Modifier
+                                .widthIn(max = 420.dp)
+                                .fillMaxWidth(),
                         ) {
                             OutlinedTextField(
                                 value = joinCode,
                                 onValueChange = {
-                                    joinCode = it.uppercase().take(6).filter { c -> c.isLetterOrDigit() }
+                                    joinCode = it.uppercase().take(6)
+                                        .filter { c -> c.isLetterOrDigit() }
                                     joinError = null
                                 },
                                 placeholder = {
                                     Text(
                                         "XXXXXX",
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = HtsSilverDim)
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = HtsSilverDim
+                                        )
                                     )
                                 },
                                 isError = joinError != null,
@@ -353,12 +361,15 @@ fun HomeScreen(
                                     disabledContainerColor = HtsSilverDim,
                                 ),
                                 shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.height(56.dp).width(88.dp),
+                                modifier = Modifier
+                                    .height(56.dp)
+                                    .width(88.dp),
                             ) {
                                 Text(
                                     "Join",
                                     style = MaterialTheme.typography.labelLarge.copy(
-                                        color = if (joinCode.length == 6) HtsDeepNavy else HtsSilver
+                                        color = if (joinCode.length == 6) HtsDeepNavy
+                                                else HtsSilver
                                     ),
                                 )
                             }
@@ -388,7 +399,7 @@ private fun generateRoomCode(): String {
 /** Small procedural sigil for the home screen branding panel */
 @Composable
 private fun HtsSmallSigil() {
-    androidx.compose.foundation.Canvas(
+    Canvas(
         modifier = Modifier
             .width(80.dp)
             .height(80.dp),
@@ -401,11 +412,11 @@ private fun HtsSmallSigil() {
         drawCircle(
             color = HtsGoldMuted,
             radius = r,
-            center = androidx.compose.ui.geometry.Offset(cx, cy),
+            center = Offset(cx, cy),
             style = Stroke(width = 1.5.dp.toPx()),
         )
-        // Hex
-        val hexPath = androidx.compose.ui.graphics.Path()
+        // Hexagon
+        val hexPath = Path()
         (0 until 6).forEach { i ->
             val angle = Math.toRadians((-90.0 + i * 60.0))
             val x = cx + r * 0.72f * Math.cos(angle).toFloat()
@@ -416,6 +427,6 @@ private fun HtsSmallSigil() {
         drawPath(hexPath, HtsGold, style = Stroke(width = 1.5.dp.toPx()))
 
         // Center dot
-        drawCircle(HtsGold, radius = 4.dp.toPx(), center = androidx.compose.ui.geometry.Offset(cx, cy))
+        drawCircle(HtsGold, radius = 4.dp.toPx(), center = Offset(cx, cy))
     }
 }
