@@ -13,3 +13,19 @@
 .externalNativeBuild
 .cxx
 local.properties
+google-services.json
+# Hasil Build & File Eksperimen Tambahan
+*.apk
+*.ap_
+*.aab
+output-metadata.json
+*.log
+.navigation/
+
+# Folder Konfigurasi Android Studio Lengkap
+.idea/
+
+# Keamanan (Kunci Aplikasi)
+*.jks
+*.keystore
+
