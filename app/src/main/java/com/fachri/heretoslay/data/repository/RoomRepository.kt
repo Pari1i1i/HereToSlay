@@ -46,6 +46,8 @@ class RoomRepository(
                 FirestoreSchema.Fields.DISCARD_PILE_IDS to emptyList<String>(),
                 FirestoreSchema.Fields.ACTIVE_MONSTER_IDS to shuffledMonsters.take(3),
                 FirestoreSchema.Fields.DEFEATED_MONSTER_IDS to emptyList<String>(),
+                FirestoreSchema.Fields.TURN_DURATION_SECONDS to 60,
+                FirestoreSchema.Fields.TURN_START_TIME_MILLIS to 0L,
                 FirestoreSchema.Fields.RULE_VETO to true,
                 FirestoreSchema.Fields.RULE_CHAOS to true,
                 FirestoreSchema.Fields.RULE_BOUNTY to true,
@@ -187,6 +189,19 @@ class RoomRepository(
         }
     }
 
+    suspend fun updateTurnDuration(roomCode: String, seconds: Int): Result<Unit> {
+        return try {
+            val docRef = roomsCollection.document(roomCode.trim().uppercase())
+            docRef.update(
+                FirestoreSchema.Fields.TURN_DURATION_SECONDS, seconds,
+                FirestoreSchema.Fields.UPDATED_AT, System.currentTimeMillis()
+            ).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun startGame(roomCode: String): Result<Unit> {
         return try {
             val docRef = roomsCollection.document(roomCode.trim().uppercase())
@@ -243,6 +258,7 @@ class RoomRepository(
                 tx.update(docRef, FirestoreSchema.Fields.HANDS, handsMap)
                 tx.update(docRef, FirestoreSchema.Fields.REMAINING_DECK_IDS, deck)
                 tx.update(docRef, FirestoreSchema.Fields.CURRENT_TURN_INDEX, 0L)
+                tx.update(docRef, FirestoreSchema.Fields.TURN_START_TIME_MILLIS, System.currentTimeMillis())
                 tx.update(docRef, FirestoreSchema.Fields.UPDATED_AT, System.currentTimeMillis())
             }.await()
 

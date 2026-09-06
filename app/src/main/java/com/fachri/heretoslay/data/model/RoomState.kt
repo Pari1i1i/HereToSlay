@@ -29,6 +29,10 @@ data class RoomState(
     /** Monster IDs that have been defeated (removed from play) */
     val defeatedMonsterIds: List<String> = emptyList(),
 
+    // ── Turn Timer (seconds per turn, 0 = unlimited) ─────────────────────
+    val turnDurationSeconds: Int = 60,
+    val turnStartTimeMillis: Long = 0L,
+
     // ── House rules toggles ───────────────────────────────────────────────
     val houseRuleVetoEnabled: Boolean = true,
     val houseRuleChaosEnabled: Boolean = true,

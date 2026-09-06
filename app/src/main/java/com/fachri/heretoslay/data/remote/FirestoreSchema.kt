@@ -24,6 +24,8 @@ object FirestoreSchema {
         const val DISCARD_PILE_IDS = "discardPileIds"
         const val ACTIVE_MONSTER_IDS = "activeMonsterIds"
         const val DEFEATED_MONSTER_IDS = "defeatedMonsterIds"
+        const val TURN_DURATION_SECONDS = "turnDurationSeconds"
+        const val TURN_START_TIME_MILLIS = "turnStartTimeMillis"
         const val RULE_VETO = "houseRuleVetoEnabled"
         const val RULE_CHAOS = "houseRuleChaosEnabled"
         const val RULE_BOUNTY = "houseRuleBountyEnabled"
@@ -107,6 +109,8 @@ object FirestoreSchema {
             discardPileIds = (data[Fields.DISCARD_PILE_IDS] as? List<String>) ?: emptyList(),
             activeMonsterIds = (data[Fields.ACTIVE_MONSTER_IDS] as? List<String>) ?: emptyList(),
             defeatedMonsterIds = (data[Fields.DEFEATED_MONSTER_IDS] as? List<String>) ?: emptyList(),
+            turnDurationSeconds = (data[Fields.TURN_DURATION_SECONDS] as? Long)?.toInt() ?: 60,
+            turnStartTimeMillis = (data[Fields.TURN_START_TIME_MILLIS] as? Long) ?: 0L,
             houseRuleVetoEnabled = data[Fields.RULE_VETO] as? Boolean ?: true,
             houseRuleChaosEnabled = data[Fields.RULE_CHAOS] as? Boolean ?: true,
             houseRuleBountyEnabled = data[Fields.RULE_BOUNTY] as? Boolean ?: true,
