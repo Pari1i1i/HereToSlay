@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -58,7 +60,6 @@ import com.fachri.heretoslay.ui.theme.HtsCrimsonBright
 import com.fachri.heretoslay.ui.theme.HtsDeepNavy
 import com.fachri.heretoslay.ui.theme.HtsEmeraldBright
 import com.fachri.heretoslay.ui.theme.HtsGold
-import com.fachri.heretoslay.ui.theme.HtsGoldMuted
 import com.fachri.heretoslay.ui.theme.HtsParchment
 import com.fachri.heretoslay.ui.theme.HtsParchmentDim
 import com.fachri.heretoslay.ui.theme.HtsSilver
@@ -148,9 +149,9 @@ fun LobbyScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
-                // ── Left: Players Grid (60%) ────────────────────────────────────
+                // ── Left: Players Grid (58%) ────────────────────────────────────
                 Column(
                     modifier = Modifier
                         .weight(0.58f)
@@ -174,12 +175,12 @@ fun LobbyScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(6) { index ->
@@ -193,21 +194,26 @@ fun LobbyScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 // Vertical Divider
                 Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(HtsBorder))
 
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 // ── Right: House Rules & Actions (42%) ──────────────────────────
                 Column(
                     modifier = Modifier
                         .weight(0.42f)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Column {
+                    // Scrollable House Rules Area
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -228,7 +234,7 @@ fun LobbyScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         HouseRuleToggle(
                             title = "Hak Veto",
@@ -243,7 +249,7 @@ fun LobbyScreen(
                             },
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(5.dp))
 
                         HouseRuleToggle(
                             title = "Chaos Rule",
@@ -258,7 +264,7 @@ fun LobbyScreen(
                             },
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(5.dp))
 
                         HouseRuleToggle(
                             title = "Bounty",
@@ -273,7 +279,7 @@ fun LobbyScreen(
                             },
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(5.dp))
 
                         HouseRuleToggle(
                             title = "Curse & Raid",
@@ -287,15 +293,21 @@ fun LobbyScreen(
                                 )
                             },
                         )
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // ── Bottom Action Controls ──────────────────────────────────
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    // ── Fixed Bottom Action Controls ────────────────────────────
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                    ) {
                         if (uiState.errorMessage != null) {
                             Text(
                                 text = uiState.errorMessage ?: "",
                                 style = MaterialTheme.typography.bodySmall.copy(color = HtsCrimsonBright),
-                                modifier = Modifier.padding(bottom = 6.dp),
+                                modifier = Modifier.padding(bottom = 4.dp),
                                 textAlign = TextAlign.Center,
                             )
                         }
@@ -313,7 +325,7 @@ fun LobbyScreen(
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp),
+                                    .height(46.dp),
                             ) {
                                 if (uiState.isStartingGame) {
                                     CircularProgressIndicator(color = HtsDeepNavy, modifier = Modifier.size(20.dp))
@@ -340,7 +352,7 @@ fun LobbyScreen(
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp),
+                                    .height(46.dp),
                             ) {
                                 Text(
                                     text = if (isReady) "Kamu Sudah Siap (Klik Batal)" else "Saya Siap!",
@@ -406,8 +418,8 @@ private fun LobbyTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 24.dp),
+            .height(52.dp)
+            .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -433,7 +445,7 @@ private fun LobbyTopBar(
                 .background(HtsCardSurface)
                 .border(1.dp, HtsGold.copy(alpha = 0.6f), RoundedCornerShape(30.dp))
                 .clickable(onClick = onCopyCode)
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 5.dp),
         ) {
             Text(
                 text = "KODE ROOM: ",
@@ -471,7 +483,7 @@ private fun LobbyTopBar(
                 .clip(RoundedCornerShape(20.dp))
                 .background(HtsSurfaceNavy)
                 .border(1.dp, HtsBorderSubtle, RoundedCornerShape(20.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .padding(horizontal = 12.dp, vertical = 5.dp)
         ) {
             Text(
                 text = "$playerCount / 6 Pemain",

@@ -1,5 +1,6 @@
 package com.fachri.heretoslay.ui.theme
 
+import android.app.Activity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -7,6 +8,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 // ─── Dark-only color scheme — this app never uses light mode ─────────────────
 private val HtsDarkColorScheme = darkColorScheme(
@@ -53,9 +56,12 @@ fun HereToSlayTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
-            // Edge-to-edge: let the nav bar be transparent
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            // Immersive fullscreen mode — hide status bar (battery/clock/wifi) and navigation bar
             WindowCompat.setDecorFitsSystemWindows(window, false)
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
         }
     }
 

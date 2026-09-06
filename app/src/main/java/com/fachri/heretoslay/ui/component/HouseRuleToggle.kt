@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,7 +54,7 @@ fun HouseRuleToggle(
             .background(HtsCardSurface)
             .border(1.dp, if (enabled) HtsBorder else HtsBorderSubtle, RoundedCornerShape(10.dp))
             .clickable(enabled = isHost, onClick = onToggle)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -64,6 +65,7 @@ fun HouseRuleToggle(
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = if (enabled) HtsParchment else HtsSilverDim,
+                        fontSize = 13.sp,
                     ),
                 )
                 if (enabled) {
@@ -79,19 +81,20 @@ fun HouseRuleToggle(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 11.sp,
+                    fontSize = 10.5.sp,
                     color = HtsParchmentDim.copy(alpha = 0.7f),
                 ),
                 maxLines = 1,
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
 
         Switch(
             checked = enabled,
             onCheckedChange = if (isHost) { _ -> onToggle() } else null,
             enabled = isHost,
+            modifier = Modifier.scale(0.85f),
             colors = SwitchDefaults.colors(
                 checkedThumbColor = HtsDeepNavy,
                 checkedTrackColor = HtsGold,
