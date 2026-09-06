@@ -1,58 +1,68 @@
 package com.example.heretoslay.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+// ─── Dark-only color scheme — this app never uses light mode ─────────────────
+private val HtsDarkColorScheme = darkColorScheme(
+    primary             = HtsGold,
+    onPrimary           = HtsDeepNavy,
+    primaryContainer    = HtsGoldMuted,
+    onPrimaryContainer  = HtsParchment,
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    secondary           = HtsSilver,
+    onSecondary         = HtsDeepNavy,
+    secondaryContainer  = HtsSilverDim,
+    onSecondaryContainer = HtsParchment,
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    tertiary            = HtsEmeraldBright,
+    onTertiary          = HtsDeepNavy,
+    tertiaryContainer   = HtsEmerald,
+    onTertiaryContainer = HtsParchment,
+
+    error               = HtsCrimsonBright,
+    onError             = HtsWhite,
+    errorContainer      = HtsCrimson,
+    onErrorContainer    = HtsParchment,
+
+    background          = HtsDeepNavy,
+    onBackground        = HtsParchment,
+
+    surface             = HtsSurfaceNavy,
+    onSurface           = HtsParchment,
+    surfaceVariant      = HtsCardSurface,
+    onSurfaceVariant    = HtsSilver,
+
+    outline             = HtsBorder,
+    outlineVariant      = HtsBorderSubtle,
+
+    scrim               = Color(0xCC000000),
+
+    inverseSurface      = HtsParchment,
+    inverseOnSurface    = HtsDeepNavy,
+    inversePrimary      = HtsGoldMuted,
 )
 
 @Composable
-fun HereToSlayTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+fun HereToSlayTheme(content: @Composable () -> Unit) {
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+            // Edge-to-edge: let the nav bar be transparent
+            WindowCompat.setDecorFitsSystemWindows(window, false)
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        colorScheme = HtsDarkColorScheme,
+        typography  = HtsTypography,
+        shapes      = HtsShapes,
+        content     = content,
     )
 }
