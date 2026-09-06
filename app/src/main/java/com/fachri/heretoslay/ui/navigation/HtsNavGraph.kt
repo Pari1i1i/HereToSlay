@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fachri.heretoslay.ui.screen.HomeScreen
+import com.fachri.heretoslay.ui.screen.LobbyScreen
 import com.fachri.heretoslay.ui.screen.PlaceholderScreen
 import com.fachri.heretoslay.ui.screen.SplashScreen
 
@@ -85,10 +86,15 @@ fun HtsNavGraph(
         ) { backStack ->
             val roomCode = backStack.arguments
                 ?.getString(HtsDestination.Lobby.ARG_ROOM_CODE) ?: ""
-            // Lobby screen will be implemented in Part 2
-            PlaceholderScreen(
-                label = "Lobby — Room: $roomCode",
-                onBack = { navController.popBackStack() },
+
+            LobbyScreen(
+                roomCode = roomCode,
+                onGameStarted = { code ->
+                    navController.navigate(HtsDestination.Game.withCode(code))
+                },
+                onLeaveLobby = {
+                    navController.popBackStack()
+                },
             )
         }
 

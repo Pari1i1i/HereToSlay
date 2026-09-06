@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -36,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,10 +53,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fachri.heretoslay.data.repository.RoomRepository
 import com.fachri.heretoslay.ui.theme.HtsBorder
 import com.fachri.heretoslay.ui.theme.HtsBorderSubtle
 import com.fachri.heretoslay.ui.theme.HtsCardSurface
 import com.fachri.heretoslay.ui.theme.HtsCrimson
+import com.fachri.heretoslay.ui.theme.HtsCrimsonBright
 import com.fachri.heretoslay.ui.theme.HtsDeepNavy
 import com.fachri.heretoslay.ui.theme.HtsGold
 import com.fachri.heretoslay.ui.theme.HtsGoldGlow
@@ -64,27 +69,21 @@ import com.fachri.heretoslay.ui.theme.HtsSilver
 import com.fachri.heretoslay.ui.theme.HtsSilverDim
 import com.fachri.heretoslay.ui.theme.HtsSurfaceNavy
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-/**
- * Home screen — landscape layout split into two halves:
- *   Left  — branding / sigil wordmark
- *   Right — action panel (player name input + Create Room / Join Room)
- *
- * The "Join Room" flow expands an inline panel below the main actions
- * rather than navigating away, keeping the landscape space fully utilized.
- *
- * For Part 1, room code generation is local (random string).
- * In Part 2, it will be replaced with Firestore calls.
- */
 @Composable
 fun HomeScreen(
     onNavigateToLobby: (roomCode: String) -> Unit,
+    roomRepository: RoomRepository = remember { RoomRepository() },
 ) {
     var playerName by rememberSaveable { mutableStateOf("") }
     var joinCode   by rememberSaveable { mutableStateOf("") }
     var showJoin   by remember { mutableStateOf(false) }
     var nameError  by remember { mutableStateOf(false) }
     var joinError  by remember { mutableStateOf<String?>(null) }
+    var isBusy     by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
 
     // Entry animation
     val panelReveal = remember { Animatable(0f) }
@@ -158,7 +157,7 @@ fun HomeScreen(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "2 – 6 Players  •  Online",
+                        text = "2 – 6 Players  •  Online Multiplayer",
                         style = MaterialTheme.typography.bodySmall.copy(color = HtsSilver),
                     )
                 }
@@ -186,7 +185,7 @@ fun HomeScreen(
             ) {
 
                 Text(
-                    text = "Enter your name",
+                    text = "Masukkan Nama Kamu",
                     style = MaterialTheme.typography.titleMedium.copy(color = HtsParchmentDim),
                 )
                 Spacer(Modifier.height(8.dp))
@@ -197,15 +196,17 @@ fun HomeScreen(
                     onValueChange = {
                         playerName = it.take(20)
                         nameError = false
+                        joinError = null
                     },
                     placeholder = {
                         Text(
-                            "Your name",
+                            "Nama Pemain",
                             style = MaterialTheme.typography.bodyMedium.copy(color = HtsSilverDim)
                         )
                     },
                     isError = nameError,
                     singleLine = true,
+                    enabled = !isBusy,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
                         imeAction = ImeAction.Done,
@@ -228,7 +229,7 @@ fun HomeScreen(
                 )
                 if (nameError) {
                     Text(
-                        text = "Please enter your name first",
+                        text = "Silakan isi nama kamu terlebih dahulu",
                         style = MaterialTheme.typography.labelSmall.copy(color = HtsCrimson),
                         modifier = Modifier.padding(top = 4.dp, start = 4.dp),
                     )
@@ -240,12 +241,23 @@ fun HomeScreen(
                 Button(
                     onClick = {
                         if (playerName.isBlank()) { nameError = true; return@Button }
-                        val code = generateRoomCode()
-                        onNavigateToLobby(code)
+                        isBusy = true
+                        joinError = null
+                        coroutineScope.launch {
+                            val result = roomRepository.createRoom(playerName)
+                            isBusy = false
+                            if (result.isSuccess) {
+                                onNavigateToLobby(result.getOrThrow())
+                            } else {
+                                joinError = result.exceptionOrNull()?.message ?: "Gagal membuat room."
+                            }
+                        }
                     },
+                    enabled = !isBusy,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = HtsGold,
                         contentColor   = HtsDeepNavy,
+                        disabledContainerColor = HtsGoldMuted,
                     ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
@@ -253,13 +265,17 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                 ) {
-                    Text(
-                        text = "Create Room",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            color = HtsDeepNavy,
-                            letterSpacing = 1.sp,
-                        ),
-                    )
+                    if (isBusy && !showJoin) {
+                        CircularProgressIndicator(color = HtsDeepNavy, modifier = Modifier.size(20.dp))
+                    } else {
+                        Text(
+                            text = "Buat Room Baru",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = HtsDeepNavy,
+                                letterSpacing = 1.sp,
+                            ),
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -271,6 +287,7 @@ fun HomeScreen(
                         showJoin = !showJoin
                         joinError = null
                     },
+                    enabled = !isBusy,
                     border = androidx.compose.foundation.BorderStroke(1.dp, HtsBorder),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -282,7 +299,7 @@ fun HomeScreen(
                         .height(52.dp),
                 ) {
                     Text(
-                        text = if (showJoin) "Cancel" else "Join Room",
+                        text = if (showJoin) "Tutup Panel Gabung" else "Gabung Room",
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = HtsParchment,
                             letterSpacing = 1.sp,
@@ -300,7 +317,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.padding(top = 16.dp)) {
                         Text(
-                            text = "Enter room code",
+                            text = "Masukkan 6 digit kode room",
                             style = MaterialTheme.typography.labelMedium.copy(color = HtsParchmentDim),
                         )
                         Spacer(Modifier.height(8.dp))
@@ -327,14 +344,24 @@ fun HomeScreen(
                                 },
                                 isError = joinError != null,
                                 singleLine = true,
+                                enabled = !isBusy,
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Ascii,
                                     imeAction = ImeAction.Go,
                                     capitalization = KeyboardCapitalization.Characters,
                                 ),
                                 keyboardActions = KeyboardActions(onGo = {
-                                    if (joinCode.length == 6) onNavigateToLobby(joinCode)
-                                    else joinError = "Code must be 6 characters"
+                                    if (joinCode.length == 6) {
+                                        isBusy = true
+                                        coroutineScope.launch {
+                                            val res = roomRepository.joinRoom(joinCode, playerName)
+                                            isBusy = false
+                                            if (res.isSuccess) onNavigateToLobby(joinCode)
+                                            else joinError = res.exceptionOrNull()?.message ?: "Gagal bergabung ke room."
+                                        }
+                                    } else {
+                                        joinError = "Kode harus 6 karakter"
+                                    }
                                 }),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor      = HtsGold,
@@ -351,10 +378,19 @@ fun HomeScreen(
                             )
                             Button(
                                 onClick = {
-                                    if (joinCode.length == 6) onNavigateToLobby(joinCode)
-                                    else joinError = "Code must be 6 characters"
+                                    if (joinCode.length == 6) {
+                                        isBusy = true
+                                        coroutineScope.launch {
+                                            val res = roomRepository.joinRoom(joinCode, playerName)
+                                            isBusy = false
+                                            if (res.isSuccess) onNavigateToLobby(joinCode)
+                                            else joinError = res.exceptionOrNull()?.message ?: "Gagal bergabung ke room."
+                                        }
+                                    } else {
+                                        joinError = "Kode harus 6 karakter"
+                                    }
                                 },
-                                enabled = joinCode.length == 6,
+                                enabled = joinCode.length == 6 && !isBusy,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = HtsGold,
                                     contentColor   = HtsDeepNavy,
@@ -363,40 +399,38 @@ fun HomeScreen(
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier
                                     .height(56.dp)
-                                    .width(88.dp),
+                                    .width(96.dp),
                             ) {
-                                Text(
-                                    "Join",
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = if (joinCode.length == 6) HtsDeepNavy
-                                                else HtsSilver
-                                    ),
-                                )
+                                if (isBusy && showJoin) {
+                                    CircularProgressIndicator(color = HtsDeepNavy, modifier = Modifier.size(20.dp))
+                                } else {
+                                    Text(
+                                        "Gabung",
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            color = if (joinCode.length == 6) HtsDeepNavy else HtsSilver
+                                        ),
+                                    )
+                                }
                             }
                         }
-                        if (joinError != null) {
-                            Text(
-                                text = joinError!!,
-                                style = MaterialTheme.typography.labelSmall.copy(color = HtsCrimson),
-                                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
-                            )
-                        }
                     }
+                }
+
+                if (joinError != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = joinError!!,
+                        style = MaterialTheme.typography.bodySmall.copy(color = HtsCrimsonBright),
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
                 }
             }
         }
     }
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Procedural Canvas Sigil for Home ────────────────────────────────────────
 
-/** Generates a random 6-character alphanumeric room code. In Part 2, replaced by Firestore. */
-private fun generateRoomCode(): String {
-    val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    return (1..6).map { chars.random() }.joinToString("")
-}
-
-/** Small procedural sigil for the home screen branding panel */
 @Composable
 private fun HtsSmallSigil() {
     Canvas(
